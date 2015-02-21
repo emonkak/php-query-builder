@@ -1,0 +1,33 @@
+{
+    "name": "emonkak/query-builder",
+    "description": "An immutable query bilder",
+    "type": "library",
+    "keywords": ["sql", "query"],
+    "homepage": "https://github.com/emonkak/php-query-builder",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Shota Nozaki",
+            "email": "emonkak@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "require-dev": {
+      "athletic/athletic": "~0.1.8",
+      "phpunit/phpunit": "~4.4.0",
+      "satooshi/php-coveralls": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Emonkak\\QueryBuilder\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Emonkak\\QueryBuilder\\Benchmarks\\": "benchmarks/",
+            "Emonkak\\QueryBuilder\\Tests\\": "tests/"
+        }
+    }
+}
