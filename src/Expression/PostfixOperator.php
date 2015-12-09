@@ -2,9 +2,9 @@
 
 namespace Emonkak\QueryBuilder\Expression;
 
-class UnaryOperator
+class PostfixOperator implements ExpressionInterface
 {
-    use ExpressionHelper;
+    use ExpressionHelpers;
 
     /**
      * @var string
@@ -31,7 +31,7 @@ class UnaryOperator
      */
     public function compile()
     {
-        list ($sql, $binds) = $this->lhs->compile();
-        return ["($this->operator $sql)", $binds];
+        list ($sql, $binds) = $this->value->compile();
+        return ["($sql $this->operator)", $binds];
     }
 }

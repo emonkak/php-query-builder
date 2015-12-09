@@ -4,7 +4,6 @@ namespace Emonkak\QueryBuilder;
 
 use Emonkak\QueryBuilder\Compiler\CompilerInterface;
 use Emonkak\QueryBuilder\Compiler\SelectCompiler;
-use Emonkak\QueryBuilder\Expression\ExpressionResolver;
 
 class SelectBuilder implements QueryInterface
 {
@@ -14,22 +13,52 @@ class SelectBuilder implements QueryInterface
     /**
      * @var Compiler
      */
-    protected $compiler;
+    private $compiler;
+
+    /**
+     * @var array
+     */
+    private $fragments;
 
     /**
      * @return self
      */
-    public static function create()
+    public static function createDefault()
     {
-        return new static(new SelectCompiler());
+        return self::create(SelectCompiler::getInstance());
     }
 
     /**
      * @param CompilerInterface $compiler
+     * @return self
      */
-    public function __construct(CompilerInterface $compiler)
+    public static function create(CompilerInterface $compiler)
+    {
+        $fragments = [
+            'prefix' => 'SELECT',
+            'projections' => [],
+            'from' => [],
+            'join' => [],
+            'where' => [],
+            'groupBy' => [],
+            'having' => [],
+            'orderBy' => [],
+            'offset' => null,
+            'limit' => null,
+            'suffix' => null,
+            'union' => [],
+        ];
+        return new static($compiler, $fragments);
+    }
+
+    /**
+     * @param CompilerInterface $compiler
+     * @param array             $fragments
+     */
+    protected function __construct(CompilerInterface $compiler, array $fragments)
     {
         $this->compiler = $compiler;
+        $this->fragments = $fragments;
     }
 
     /**
@@ -38,5 +67,25 @@ class SelectBuilder implements QueryInterface
     public function compile()
     {
         return $this->compiler->compile($this->fragments);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function set($key, $value)
+    {
+        $fragments = $this->fragments;
+        $fragments[$key] = $value;
+        return new static($this->compiler, $fragments);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function add($key, $value)
+    {
+        $fragments = $this->fragments;
+        $fragments[$key][] = $value;
+        return new static($this->compiler, $fragments);
     }
 }

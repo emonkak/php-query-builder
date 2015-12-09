@@ -7,103 +7,76 @@ use Emonkak\QueryBuilder\Expression\ExpressionResolver;
 trait SelectBuilderTrait
 {
     /**
-     * @var array
-     */
-    protected $fragments = [
-        'prefix' => 'SELECT',
-        'projections' => [],
-        'from' => [],
-        'join' => [],
-        'where' => null,
-        'groupBy' => [],
-        'having' => null,
-        'orderBy' => [],
-        'offset' => null,
-        'limit' => null,
-        'suffix' => null,
-    ];
-
-    /**
      * @param string $prefix
      * @return self
      */
     public function prefix($prefix)
     {
-        $builder = clone $this;
-        $builder->fragments['prefix'] = $prefix;
-        return $builder;
+        return $this->set('prefix', $prefix);
     }
 
     /**
-     * @param mixed $expr
+     * @param mixed  $expr
+     * @param string $alias
      * @return self
      */
-    public function project($expr)
+    public function select($expr, $alias = null)
     {
-        $builder = clone $this;
-        $builder->fragments['projections'][] = ExpressionResolver::get($expr);
-        return $builder;
+        return $this->add('projections', [
+            'expr' => ExpressionResolver::resolveCreteria($expr),
+            'alias' => $alias
+        ]);
     }
 
     /**
-     * @param mixed $table
+     * @param mixed  $expr
+     * @param string $alias
      * @return self
      */
-    public function from($table)
+    public function from($expr, $alias = null)
     {
-        $builder = clone $this;
-        $builder->fragments['from'][] = ExpressionResolver::get($table);
-        return $builder;
+        return $this->add('from', [
+            'expr' => ExpressionResolver::resolveCreteria($expr),
+            'alias' => $alias,
+        ]);
     }
 
     /**
-     * @param mixed $condition
+     * @param mixed[] ...$args
      * @return self
      */
-    public function where($condition)
+    public function where()
     {
-        $builder = clone $this;
-        $builder->fragments['where'] = ExpressionResolver::get($condition);
-        return $builder;
+        $args = func_get_args();
+        return $this->add('where', ExpressionResolver::resolveCreteria($args));
     }
 
     /**
-     * @param mixed $condition
+     * @param mixed  $table
+     * @param mixed  $condition
+     * @param string $alias
+     * @param string $type
      * @return self
      */
-    public function whereAnd($condition)
+    public function join($table, $condition = null, $alias = null, $type = 'JOIN')
     {
-        $builder = clone $this;
-        $builder->fragments['where'] = $builder->fragments['where']->_and(ExpressionResolver::get($condition));
-        return $builder;
+        return $this->add('join', [
+            'table' => ExpressionResolver::resolveCreteria($table),
+            'alias' => $alias,
+            'type' => $type,
+            'condition' => $condition !== null ? ExpressionResolver::resolveCreteria($condition) : null,
+        ]);
     }
 
     /**
-     * @param mixed $condition
+     * @param mixed  $table
+     * @param mixed  $condition
+     * @param string $alias
      * @return self
      */
-    public function whereOr($condition)
+    public function leftJoin($table, $condition = null, $alias = null)
     {
-        $builder = clone $this;
-        $builder->fragments['where'] = $builder->fragments['where']->_or(ExpressionResolver::get($condition));
-        return $builder;
-    }
-
-    /**
-     * @param mixed      $table
-     * @param mixed|nlll $condition
-     * @param string     $type
-     * @return self
-     */
-    public function join($table, $condition = null, $type = 'JOIN')
-    {
-        $builder = clone $this;
-        $builder->fragments['join'][] = [
-            'table' => ExpressionResolver::get($table),
-            'condition' => $condition !== null ? ExpressionResolver::get($condition) : null,
-            'type' => $type
-        ];
-        return $builder;
+        return $this->join($table, $condition, $alias);
     }
 
     /**
@@ -113,45 +86,20 @@ trait SelectBuilderTrait
      */
     public function groupBy($expr, $direction = null)
     {
-        $builder = clone $this;
-        $builder->fragments['groupBy'][] = [
-            'expr' => ExpressionResolver::get($expr),
+        return $this->add('groupBy', [
+            'expr' => ExpressionResolver::resolveCreteria($expr),
             'direction' => $direction,
-        ];
-        return $builder;
+        ]);
     }
 
     /**
-     * @param mixed $condition
+     * @param mixed[] ...$args
      * @return self
      */
-    public function having($condition)
+    public function having()
     {
-        $builder = clone $this;
-        $builder->fragments['having'] = ExpressionResolver::get($condition);
-        return $builder;
-    }
-
-    /**
-     * @param mixed $condition
-     * @return self
-     */
-    public function havingAnd($condition)
-    {
-        $builder = clone $this;
-        $builder->fragments['having'] = $builder->fragments['having']->_and(ExpressionResolver::get($condition));
-        return $builder;
-    }
-
-    /**
-     * @param mixed $condition
-     * @return self
-     */
-    public function havingOr($condition)
-    {
-        $builder = clone $this;
-        $builder->fragments['having'] = $builder->fragments['having']->_or(ExpressionResolver::get($condition));
-        return $builder;
+        $args = func_get_args();
+        return $this->add('having', ExpressionResolver::resolveCreteria($args));
     }
 
     /**
@@ -161,12 +109,10 @@ trait SelectBuilderTrait
      */
     public function orderBy($expr, $direction = null)
     {
-        $builder = clone $this;
-        $builder->fragments['orderBy'][] = [
-            'expr' => ExpressionResolver::get($expr),
+        return $this->add('orderBy', [
+            'expr' => ExpressionResolver::resolveCreteria($expr),
             'direction' => $direction
-        ];
-        return $builder;
+        ]);
     }
 
     /**
@@ -175,9 +121,7 @@ trait SelectBuilderTrait
      */
     public function limit($limit)
     {
-        $builder = clone $this;
-        $builder->fragments['limit'] = $limit;
-        return $builder;
+        return $this->set('limit', $limit);
     }
 
     /**
@@ -186,9 +130,7 @@ trait SelectBuilderTrait
      */
     public function offset($offset)
     {
-        $builder = clone $this;
-        $builder->fragments['offset'] = $offset;
-        return $builder;
+        return $this->set('offset', $offset);
     }
 
     /**
@@ -197,8 +139,50 @@ trait SelectBuilderTrait
      */
     public function suffix($suffix)
     {
-        $builder = clone $this;
-        $builder->fragments['suffix'] = $suffix;
-        return $builder;
+        return $this->set('suffix', $suffix);
     }
+
+    /**
+     * @return self
+     */
+    public function forUpdate()
+    {
+        return $this->suffix('FOR UPDATE');
+    }
+
+    /**
+     * @param string $expr
+     * @param string $type
+     * @return self
+     */
+    public function union($expr, $type = 'UNION')
+    {
+        return $this->add('union', [
+            'expr' => ExpressionResolver::resolveValue($expr),
+            'type' => $type,
+        ]);
+    }
+
+    /**
+     * @param string $table
+     * @return self
+     */
+    public function unionAll($table)
+    {
+        return $this->union($table, 'UNION ALL');
+    }
+
+    /**
+     * @param string $key
+     * @param mixed $value
+     * @return self
+     */
+    abstract protected function add($key, $value);
+
+    /**
+     * @param string $key
+     * @param mixed $value
+     * @return self
+     */
+    abstract protected function set($key, $value);
 }

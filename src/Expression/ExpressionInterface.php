@@ -5,9 +5,7 @@ namespace Emonkak\QueryBuilder\Expression;
 interface ExpressionInterface
 {
     /**
-     * Compiles this expression.
-     *
-     * @return array (sql, binds)
+     * @return array (string, mixed[])
      */
     public function compile();
 }

@@ -4,7 +4,7 @@ namespace Emonkak\QueryBuilder\Expression;
 
 class Operator implements ExpressionInterface
 {
-    use ExpressionHelper;
+    use ExpressionHelpers;
 
     /**
      * @var string

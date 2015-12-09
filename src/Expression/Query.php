@@ -4,9 +4,9 @@ namespace Emonkak\QueryBuilder\Expression;
 
 use Emonkak\QueryBuilder\QueryInterface;
 
-class SubQuery implements ExpressionInterface
+class Query implements ExpressionInterface
 {
-    use ExpressionHelper;
+    use ExpressionHelpers;
 
     /**
      * @var QueryInterface

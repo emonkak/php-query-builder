@@ -4,12 +4,12 @@ namespace Emonkak\QueryBuilder\Expression;
 
 class Raw implements ExpressionInterface
 {
-    use ExpressionHelper;
+    use ExpressionHelpers;
 
     /**
      * @var string
      */
-    private $sql;
+    private $expr;
 
     /**
      * @var mixed[]
@@ -17,12 +17,16 @@ class Raw implements ExpressionInterface
     private $binds;
 
     /**
-     * @param string  $sql
+     * @param string $expr
      * @param mixed[] $binds
      */
-    public function __construct($sql, array $binds = [])
+    public function __construct($expr, array $binds)
     {
-        $this->sql = $sql;
+        if ($expr === null) {
+            throw new \InvalidArgumentException('$expr can not be null');
+        }
+
+        $this->expr = $expr;
         $this->binds = $binds;
     }
 
@@ -31,6 +35,6 @@ class Raw implements ExpressionInterface
      */
     public function compile()
     {
-        return [$this->sql, $this->binds];
+        return [$this->expr, $this->binds];
     }
 }

@@ -4,7 +4,7 @@ namespace Emonkak\QueryBuilder\Expression;
 
 class Value implements ExpressionInterface
 {
-    use ExpressionHelper;
+    use ExpressionHelpers;
 
     /**
      * @var mixed $value

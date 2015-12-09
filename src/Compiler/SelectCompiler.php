@@ -5,23 +5,44 @@ namespace Emonkak\QueryBuilder\Compiler;
 class SelectCompiler implements CompilerInterface
 {
     /**
+     * @return self
+     */
+    public static function getInstance()
+    {
+        static $instance;
+
+        if (isset($instance)) {
+            return $instance;
+        }
+
+        return $instance = new self();
+    }
+
+    /**
+     * @codeCoverageIgnore
+     */
+    private function __construct()
+    {
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function compile(array $fragments)
     {
         $binds = [];
-
-        $sql = $fragments['prefix'];
-        $sql .= $this->compileProjections($fragments, $binds);
-        $sql .= $this->compileFrom($fragments, $binds);
-        $sql .= $this->compileJoin($fragments, $binds);
-        $sql .= $this->compileWhere($fragments, $binds);
-        $sql .= $this->compileGroupBy($fragments, $binds);
-        $sql .= $this->compileHaving($fragments, $binds);
-        $sql .= $this->compileOrderBy($fragments, $binds);
-        $sql .= $this->compileLimit($fragments, $binds);
-        $sql .= $this->compileOffset($fragments, $binds);
-        $sql .= isset($fragments['suffix']) ? ' ' . $fragments['prefix'] : '';
+        $sql = $fragments['prefix']
+             . $this->compileProjections($fragments, $binds)
+             . $this->compileFrom($fragments, $binds)
+             . $this->compileJoin($fragments, $binds)
+             . $this->compileWhere($fragments, $binds)
+             . $this->compileGroupBy($fragments, $binds)
+             . $this->compileHaving($fragments, $binds)
+             . $this->compileOrderBy($fragments, $binds)
+             . $this->compileLimit($fragments, $binds)
+             . $this->compileOffset($fragments, $binds)
+             . (isset($fragments['suffix']) ? ' ' . $fragments['suffix'] : '')
+             . $this->compileUnion($fragments, $binds);
 
         return [$sql, $binds];
     }
@@ -39,8 +60,12 @@ class SelectCompiler implements CompilerInterface
 
         $sql = [];
         foreach ($fragments['projections'] as $projection) {
-            list ($projectionSql, $projectionBinds) = $projection->compile();
-            $sql[] = $projectionSql;
+            list ($projectionSql, $projectionBinds) = $projection['expr']->compile();
+            if (isset($projection['alias'])) {
+                $sql[] = $projectionSql . ' AS ' . $projection['alias'];
+            } else {
+                $sql[] = $projectionSql;
+            }
             $binds = array_merge($binds, $projectionBinds);
         }
 
@@ -60,8 +85,12 @@ class SelectCompiler implements CompilerInterface
 
         $sql = [];
         foreach ($fragments['from'] as $definition) {
-            list ($tableSql, $tableBinds) = $definition->compile();
-            $sql[] = $tableSql;
+            list ($tableSql, $tableBinds) = $definition['expr']->compile();
+            if (isset($definition['alias'])) {
+                $sql[] = $tableSql . ' AS ' . $definition['alias'];
+            } else {
+                $sql[] = $tableSql;
+            }
             $binds = array_merge($binds, $tableBinds);
         }
 
@@ -82,7 +111,11 @@ class SelectCompiler implements CompilerInterface
         $sql = [];
         foreach ($fragments['join'] as $definition) {
             list ($tableSql, $tableBinds) = $definition['table']->compile();
-            $sql[] = $definition['type'] . ' ' . $tableSql;
+            if (isset($definition['alias'])) {
+                $sql[] = $definition['type'] . ' ' . $tableSql . ' AS ' . $definition['alias'];
+            } else {
+                $sql[] = $definition['type'] . ' ' . $tableSql;
+            }
             $binds = array_merge($binds, $tableBinds);
 
             if (isset($definition['condition'])) {
@@ -102,14 +135,18 @@ class SelectCompiler implements CompilerInterface
      */
     protected function compileWhere(array $fragments, array &$binds)
     {
-        if (!isset($fragments['where'])) {
+        if (empty($fragments['where'])) {
             return '';
         }
 
-        list ($whereSql, $whereBinds) = $fragments['where']->compile();
-        $binds = array_merge($binds, $whereBinds);
+        $sql = [];
+        foreach ($fragments['where'] as $definition) {
+            list ($whereSql, $whereBinds) = $definition->compile();
+            $sql[] = $whereSql;
+            $binds = array_merge($binds, $whereBinds);
+        }
 
-        return ' WHERE ' . $whereSql;
+        return ' WHERE ' . implode(' AND ', $sql);
     }
 
     /**
@@ -144,14 +181,18 @@ class SelectCompiler implements CompilerInterface
      */
     protected function compileHaving(array $fragments, array &$binds)
     {
-        if (!isset($fragments['having'])) {
+        if (empty($fragments['having'])) {
             return '';
         }
 
-        list ($havingSql, $havingBinds) = $fragments['having']->compile();
-        $binds = array_merge($binds, $havingBinds);
+        $sql = [];
+        foreach ($fragments['having'] as $definition) {
+            list ($havingSql, $havingBinds) = $definition->compile();
+            $sql[] = $havingSql;
+            $binds = array_merge($binds, $havingBinds);
+        }
 
-        return ' HAVING ' . $havingSql;
+        return ' HAVING ' . implode(' AND ', $sql);
     }
 
     /**
@@ -207,5 +248,26 @@ class SelectCompiler implements CompilerInterface
 
         $binds[] = $fragments['offset'];
         return ' OFFSET ?';
+    }
+
+    /**
+     * @param array $fragments
+     * @param array &$binds
+     * @return string
+     */
+    protected function compileUnion(array $fragments, array &$binds)
+    {
+        if (empty($fragments['union'])) {
+            return '';
+        }
+
+        $sql = [];
+        foreach ($fragments['union'] as $definition) {
+            list ($unionSql, $unionBinds) = $definition['expr']->compile();
+            $sql[] = $definition['type'] . ' ' . $unionSql;
+            $binds = array_merge($binds, $unionBinds);
+        }
+
+        return ' ' . implode(' ', $sql);
     }
 }
