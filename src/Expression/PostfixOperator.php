@@ -29,9 +29,9 @@ class PostfixOperator implements ExpressionInterface
     /**
      * {@inheritDoc}
      */
-    public function compile()
+    public function build()
     {
-        list ($sql, $binds) = $this->value->compile();
+        list ($sql, $binds) = $this->value->build();
         return ["($sql $this->operator)", $binds];
     }
 }

@@ -7,5 +7,5 @@ interface ExpressionInterface
     /**
      * @return array (string, mixed[])
      */
-    public function compile();
+    public function build();
 }

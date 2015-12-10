@@ -4,7 +4,7 @@ namespace Emonkak\QueryBuilder;
 
 use Emonkak\QueryBuilder\Expression\ExpressionInterface;
 
-interface QueryInterface extends ExpressionInterface
+interface QueryBuilderInterface extends ExpressionInterface
 {
     /**
      * @return string

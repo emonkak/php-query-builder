@@ -36,10 +36,10 @@ class Operator implements ExpressionInterface
     /**
      * {@inheritDoc}
      */
-    public function compile()
+    public function build()
     {
-        list ($lhsSql, $lhsBinds) = $this->lhs->compile();
-        list ($rhsSql, $rhsBinds) = $this->rhs->compile();
+        list ($lhsSql, $lhsBinds) = $this->lhs->build();
+        list ($rhsSql, $rhsBinds) = $this->rhs->build();
         return ["($lhsSql $this->operator $rhsSql)", array_merge($lhsBinds, $rhsBinds)];
     }
 }

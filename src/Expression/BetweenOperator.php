@@ -43,11 +43,11 @@ class BetweenOperator implements ExpressionInterface
     /**
      * {@inheritDoc}
      */
-    public function compile()
+    public function build()
     {
-        list ($lhsSql, $lhsBinds) = $this->lhs->compile();
-        list ($minSql, $minBinds) = $this->min->compile();
-        list ($maxSql, $maxBinds) = $this->max->compile();
+        list ($lhsSql, $lhsBinds) = $this->lhs->build();
+        list ($minSql, $minBinds) = $this->min->build();
+        list ($maxSql, $maxBinds) = $this->max->build();
         return ["($lhsSql $this->operator $minSql AND $maxSql)", array_merge($lhsBinds, $minBinds, $maxBinds)];
     }
 }

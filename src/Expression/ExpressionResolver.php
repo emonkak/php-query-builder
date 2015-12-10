@@ -2,8 +2,8 @@
 
 namespace Emonkak\QueryBuilder\Expression;
 
-use Emonkak\QueryBuilder\QueryInterface;
-use Emonkak\QueryBuilder\SelectBuilder;
+use Emonkak\QueryBuilder\QueryBuilderInterface;
+use Emonkak\QueryBuilder\SelectQueryBuilder;
 
 class ExpressionResolver
 {
@@ -18,27 +18,42 @@ class ExpressionResolver
      * @param mixed $value
      * @return ExpressionInterface
      */
-    public static function resolveValue($value)
+    public static function resolveAsValue($value)
     {
+        if ($value === null) {
+            return new NullValue();
+        }
         if (is_scalar($value)) {
             return new Value($value);
         }
         if (is_array($value)) {
             return new Values($value);
         }
-        if ($value instanceof QueryInterface) {
-            return new Query($value);
+        if ($value instanceof QueryBuilderInterface) {
+            return new SubQuery($value);
         }
         if ($value instanceof ExpressionInterface) {
             return $value;
         }
         if ($value instanceof \Closure) {
-            return self::resolveValue($value(function() {
+            return self::resolveAsValue($value(function() {
                 return self::resolveCreteria(func_get_args());
             }));
         }
-        $type = gettype($src);
+        $type = gettype($value);
         throw new \InvalidArgumentException("Invalid creteria, got '$type'.");
+    }
+
+    /**
+     * @param mixed $value
+     * @return ExpressionInterface
+     */
+    public static function resolveAsString($value)
+    {
+        if (is_string($value)) {
+            return new Str($value, []);
+        }
+        return self::resolveAsValue($value);
     }
 
     /**
@@ -68,10 +83,7 @@ class ExpressionResolver
      */
     private static function resolveSingleCreteria($first)
     {
-        if (is_string($first)) {
-            return new Raw($first, []);
-        }
-        return self::resolveValue($first);
+        return self::resolveAsString($first);
     }
 
     /**
@@ -90,16 +102,15 @@ class ExpressionResolver
         case 'NOT SOME';
         case 'EXISTS';
         case 'NOT EXISTS';
-            return new PrefixOperator($first, self::resolveValue($second));
-        case 'IS NULL';
-        case 'IS NOT NULL';
-            return new PostfixOperator($first, self::resolveValue($second));
+            return new PrefixOperator($first, self::resolveAsValue($second));
         }
 
         if (is_array($second)) {
             return new Raw($first, $second);
         } else {
-            return new Operator('=', $first, self::resolveValue($second));
+            $lhs = self::resolveAsString($first);
+            $rhs = self::resolveAsValue($second);
+            return new Operator('=', $lhs, $rhs);
         }
     }
 
@@ -128,14 +139,16 @@ class ExpressionResolver
         case 'NOT LIKE':
         case 'REGEXP':
         case 'NOT REGEXP':
-            $lhs = new Raw($first, []);
-            $rhs = self::resolveValue($third);
+        case 'IS':
+        case 'IS NOT':
+            $lhs = self::resolveAsString($first);
+            $rhs = self::resolveAsValue($third);
             return new Operator($second, $lhs, $rhs);
         case 'BETWEEN':
         case 'NOT BETWEEN':
-            $lhs = new Raw($first, []);
-            $min = self::resolveValue($third[0]);
-            $max = self::resolveValue($third[1]);
+            $lhs = self::resolveAsString($first);
+            $min = self::resolveAsValue($third[0]);
+            $max = self::resolveAsValue($third[1]);
             return new BetweenOperator($second, $lhs, $min, $max);
         }
         throw new \InvalidArgumentException("Invalid operator, got '$second'.");

@@ -22,7 +22,7 @@ class Value implements ExpressionInterface
     /**
      * {@inheritDoc}
      */
-    public function compile()
+    public function build()
     {
         return ['?', [$this->value]];
     }

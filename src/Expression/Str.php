@@ -2,7 +2,7 @@
 
 namespace Emonkak\QueryBuilder\Expression;
 
-class Raw implements ExpressionInterface
+class Str implements ExpressionInterface
 {
     use ExpressionHelpers;
 
@@ -12,23 +12,16 @@ class Raw implements ExpressionInterface
     private $expr;
 
     /**
-     * @var mixed[]
-     */
-    private $binds;
-
-    /**
      * @param string $expr
-     * @param mixed[] $binds
      */
-    public function __construct($expr, array $binds)
+    public function __construct($expr)
     {
         if (!is_string($expr)) {
             $type = gettype($expr);
-            throw new \InvalidArgumentException("The expression must be String, got '$type'");
+            throw new \InvalidArgumentException("The expression must be string, got '$type'");
         }
 
         $this->expr = $expr;
-        $this->binds = $binds;
     }
 
     /**
@@ -36,6 +29,6 @@ class Raw implements ExpressionInterface
      */
     public function build()
     {
-        return [$this->expr, $this->binds];
+        return [$this->expr, []];
     }
 }
