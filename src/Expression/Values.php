@@ -2,7 +2,9 @@
 
 namespace Emonkak\QueryBuilder\Expression;
 
-class Values implements ExpressionInterface
+use Emonkak\QueryBuilder\QueryFragmentInterface;
+
+class Values implements QueryFragmentInterface
 {
     use ExpressionHelpers;
 

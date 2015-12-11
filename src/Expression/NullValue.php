@@ -2,7 +2,9 @@
 
 namespace Emonkak\QueryBuilder\Expression;
 
-class NullValue implements ExpressionInterface
+use Emonkak\QueryBuilder\QueryFragmentInterface;
+
+class NullValue implements QueryFragmentInterface
 {
     use ExpressionHelpers;
 

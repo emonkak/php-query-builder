@@ -2,7 +2,7 @@
 
 namespace Emonkak\QueryBuilder\Compiler;
 
-use Emonkak\QueryBuilder\Expression\ExpressionInterface;
+use Emonkak\QueryBuilder\QueryFragmentInterface;
 
 class DefaultCompiler implements CompilerInterface
 {
@@ -30,7 +30,7 @@ class DefaultCompiler implements CompilerInterface
     /**
      * {@inheritDoc}
      */
-    public function compileSelect($prefix, array $projections, array $from = null, array $join, ExpressionInterface $where = null, array $groupBy, ExpressionInterface $having = null, array $orderBy, $limit, $offset, $suffix, array $union)
+    public function compileSelect($prefix, array $projections, array $from = null, array $join, QueryFragmentInterface $where = null, array $groupBy, QueryFragmentInterface $having = null, array $orderBy, $limit, $offset, $suffix, array $union)
     {
         $binds = [];
         $sql = $prefix
@@ -50,8 +50,8 @@ class DefaultCompiler implements CompilerInterface
         }
 
         foreach ($union as $definition) {
-            list ($unionSql, $unionBinds) = $definition['query']->build();
-            $sql .= ' ' . $definition['type'] . ' (' . $unionSql . ')';
+            list ($unionSql, $unionBinds) = $definition->build();
+            $sql .= ' ' . $unionSql;
             $binds = array_merge($binds, $unionBinds);
         }
 
@@ -59,8 +59,8 @@ class DefaultCompiler implements CompilerInterface
     }
 
     /**
-     * @param ExpressionInterface[] $projections
-     * @param mixed[]                &$binds
+     * @param QueryFragmentInterface[] $projections
+     * @param mixed[]                  &$binds
      * @return string
      */
     protected function compileProjections(array $projections, array &$binds)
@@ -80,8 +80,8 @@ class DefaultCompiler implements CompilerInterface
     }
 
     /**
-     * @param ExpressionInterface[] $from
-     * @param mixed[]               &$binds
+     * @param QueryFragmentInterface[] $from
+     * @param mixed[]                  &$binds
      * @return string
      */
     protected function compileFrom(array $from, array &$binds)
@@ -91,8 +91,8 @@ class DefaultCompiler implements CompilerInterface
         }
 
         $sqls = [];
-        foreach ($from as $table) {
-            list ($tableSql, $tableBinds) = $table->build();
+        foreach ($from as $definition) {
+            list ($tableSql, $tableBinds) = $definition->build();
             $sqls[] = $tableSql;
             $binds = array_merge($binds, $tableBinds);
         }
@@ -113,26 +113,20 @@ class DefaultCompiler implements CompilerInterface
 
         $sqls = [];
         foreach ($join as $definition) {
-            list ($tableSql, $tableBinds) = $definition['table']->build();
-            $sqls[] = $definition['type'] . ' ' . $tableSql;
-            $binds = array_merge($binds, $tableBinds);
-
-            if (isset($definition['condition'])) {
-                list ($conditionSql, $conditionBinds) = $definition['condition']->build();
-                $sqls[] = 'ON ' . $conditionSql;
-                $binds = array_merge($binds, $conditionBinds);
-            }
+            list ($joinSql, $joinBinds) = $definition->build();
+            $sqls[] = $joinSql;
+            $binds = array_merge($binds, $joinBinds);
         }
 
         return ' ' . implode(' ', $sqls);
     }
 
     /**
-     * @param ExpressionInterface $where
-     * @param mixed[]             &$binds
+     * @param QueryFragmentInterface $where
+     * @param mixed[]                &$binds
      * @return string
      */
-    protected function compileWhere(ExpressionInterface $where = null, array &$binds)
+    protected function compileWhere(QueryFragmentInterface $where = null, array &$binds)
     {
         if (!isset($where)) {
             return '';
@@ -157,12 +151,8 @@ class DefaultCompiler implements CompilerInterface
 
         $sqls = [];
         foreach ($groupBy as $definition) {
-            list ($groupBySql, $groupByBinds) = $definition['expr']->build();
-            if (isset($definition['direction'])) {
-                $sqls[] = $groupBySql . ' ' . $definition['direction'];
-            } else {
-                $sqls[] = $groupBySql;
-            }
+            list ($groupBySql, $groupByBinds) = $definition->build();
+            $sqls[] = $groupBySql;
             $binds = array_merge($binds, $groupByBinds);
         }
 
@@ -170,11 +160,11 @@ class DefaultCompiler implements CompilerInterface
     }
 
     /**
-     * @param ExpressionInterface $having
-     * @param mixed[]             &$binds
+     * @param QueryFragmentInterface $having
+     * @param mixed[]                &$binds
      * @return string
      */
-    protected function compileHaving(ExpressionInterface $having = null, array &$binds)
+    protected function compileHaving(QueryFragmentInterface $having = null, array &$binds)
     {
         if (!isset($having)) {
             return '';
@@ -199,12 +189,8 @@ class DefaultCompiler implements CompilerInterface
 
         $sqls = [];
         foreach ($orderBy as $definition) {
-            list ($orderBySql, $orderByBinds) = $definition['expr']->build();
-            if (isset($definition['direction'])) {
-                $sqls[] = $orderBySql . ' ' . $definition['direction'];
-            } else {
-                $sqls[] = $orderBySql;
-            }
+            list ($orderBySql, $orderByBinds) = $definition->build();
+            $sqls[] = $orderBySql;
             $binds = array_merge($binds, $orderByBinds);
         }
 

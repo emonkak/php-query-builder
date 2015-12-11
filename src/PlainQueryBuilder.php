@@ -1,6 +1,6 @@
 <?php
 
-namespace Emonkak\QueryBuilder\Expression;
+namespace Emonkak\QueryBuilder;
 
 class PlainQueryBuilder implements QueryBuilderInterface
 {
@@ -20,7 +20,7 @@ class PlainQueryBuilder implements QueryBuilderInterface
      * @param QueryBuilderInterface $query
      * @return self
      */
-    public function fromQuery(QueryBuilderInterface $query)
+    public static function fromQuery(QueryBuilderInterface $query)
     {
         list ($sql, $binds) = $query->build();
         return new static($sql, $binds);
@@ -41,6 +41,6 @@ class PlainQueryBuilder implements QueryBuilderInterface
      */
     public function build()
     {
-        return [$sql, $binds];
+        return [$this->sql, $this->binds];
     }
 }

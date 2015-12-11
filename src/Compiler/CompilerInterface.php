@@ -2,23 +2,24 @@
 
 namespace Emonkak\QueryBuilder\Compiler;
 
-use Emonkak\QueryBuilder\Expression\ExpressionInterface;
+use Emonkak\QueryBuilder\QueryBuilderInterface;
+use Emonkak\QueryBuilder\QueryFragmentInterface;
 
 interface CompilerInterface
 {
     /**
      * @param string                   $prefix
-     * @param ExpressionInterface[]    $projections
-     * @param ExpressionInterface[]    $from
-     * @param array[]                  $join
-     * @param ExpressionInterface|null $where
-     * @param array[]                  $groupBy
-     * @param ExpressionInterface|null $having
-     * @param array[]                  $orderBy
+     * @param QueryFragmentInterface[] $projections
+     * @param QueryFragmentInterface[] $from
+     * @param QueryFragmentInterface[] $join
+     * @param QueryFragmentInterface   $where
+     * @param QueryFragmentInterface[] $groupBy
+     * @param QueryFragmentInterface   $having
+     * @param QueryFragmentInterface[] $orderBy
      * @param integer                  $limit
      * @param integer                  $offset
-     * @param array[]                  $union
+     * @param QueryBuilderInterface[]  $union
      * @return array (sql: string, binds: mixed[])
      */
-    public function compileSelect($prefix, array $projections, array $from = null, array $join, ExpressionInterface $where = null, array $groupBy, ExpressionInterface $having = null, array $orderBy, $limit, $offset, $suffix, array $union);
+    public function compileSelect($prefix, array $projections, array $from = null, array $join, QueryFragmentInterface $where = null, array $groupBy, QueryFragmentInterface $having = null, array $orderBy, $limit, $offset, $suffix, array $union);
 }

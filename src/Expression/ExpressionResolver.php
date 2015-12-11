@@ -3,6 +3,7 @@
 namespace Emonkak\QueryBuilder\Expression;
 
 use Emonkak\QueryBuilder\QueryBuilderInterface;
+use Emonkak\QueryBuilder\QueryFragmentInterface;
 use Emonkak\QueryBuilder\SelectQueryBuilder;
 
 class ExpressionResolver
@@ -16,7 +17,7 @@ class ExpressionResolver
 
     /**
      * @param mixed $value
-     * @return ExpressionInterface
+     * @return QueryFragmentInterface
      */
     public static function resolveAsValue($value)
     {
@@ -32,7 +33,7 @@ class ExpressionResolver
         if ($value instanceof QueryBuilderInterface) {
             return new SubQuery($value);
         }
-        if ($value instanceof ExpressionInterface) {
+        if ($value instanceof QueryFragmentInterface) {
             return $value;
         }
         if ($value instanceof \Closure) {
@@ -46,7 +47,7 @@ class ExpressionResolver
 
     /**
      * @param mixed $value
-     * @return ExpressionInterface
+     * @return QueryFragmentInterface
      */
     public static function resolveAsString($value)
     {
@@ -58,7 +59,7 @@ class ExpressionResolver
 
     /**
      * @param mixed $creteria
-     * @return ExpressionInterface
+     * @return QueryFragmentInterface
      */
     public static function resolveCreteria($creteria)
     {
@@ -79,7 +80,7 @@ class ExpressionResolver
 
     /**
      * @param $first mixed
-     * @return ExpressionInterface
+     * @return QueryFragmentInterface
      */
     private static function resolveSingleCreteria($first)
     {
@@ -89,7 +90,7 @@ class ExpressionResolver
     /**
      * @param $first  string
      * @param $second mixed
-     * @return ExpressionInterface
+     * @return QueryFragmentInterface
      */
     private static function resolveDoubleCreteria($first, $second)
     {
@@ -118,7 +119,7 @@ class ExpressionResolver
      * @param $first  string
      * @param $second string
      * @param $third  mixed
-     * @return ExpressionInterface
+     * @return QueryFragmentInterface
      */
     private static function resolveTripleCreteria($first, $second, $third)
     {

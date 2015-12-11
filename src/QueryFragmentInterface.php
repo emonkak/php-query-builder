@@ -1,8 +1,8 @@
 <?php
 
-namespace Emonkak\QueryBuilder\Expression;
+namespace Emonkak\QueryBuilder;
 
-interface ExpressionInterface
+interface QueryFragmentInterface
 {
     /**
      * @return array (string, mixed[])

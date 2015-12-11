@@ -2,7 +2,9 @@
 
 namespace Emonkak\QueryBuilder\Expression;
 
-class Raw implements ExpressionInterface
+use Emonkak\QueryBuilder\QueryFragmentInterface;
+
+class Raw implements QueryFragmentInterface
 {
     use ExpressionHelpers;
 

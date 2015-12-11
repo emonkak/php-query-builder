@@ -1,13 +1,13 @@
 <?php
 
-namespace Emonkak\QueryBuilder\Expression;
+namespace Emonkak\QueryBuilder\Clause;
 
-class Alias implements ExpressionInterface
+use Emonkak\QueryBuilder\QueryFragmentInterface;
+
+class Alias implements QueryFragmentInterface
 {
-    use ExpressionHelpers;
-
     /**
-     * @var ExpressionInterface $value
+     * @var QueryFragmentInterface $value
      */
     private $value;
 
@@ -17,10 +17,10 @@ class Alias implements ExpressionInterface
     private $alias;
 
     /**
-     * @param ExpressionInterface $value
-     * @param string              $alias
+     * @param QueryFragmentInterface $value
+     * @param string                 $alias
      */
-    public function __construct(ExpressionInterface $value, $alias)
+    public function __construct(QueryFragmentInterface $value, $alias)
     {
         $this->value = $value;
         $this->alias = $alias;

@@ -2,7 +2,9 @@
 
 namespace Emonkak\QueryBuilder\Expression;
 
-class PrefixOperator implements ExpressionInterface
+use Emonkak\QueryBuilder\QueryFragmentInterface;
+
+class PrefixOperator implements QueryFragmentInterface
 {
     use ExpressionHelpers;
 
@@ -12,15 +14,15 @@ class PrefixOperator implements ExpressionInterface
     private $operator;
 
     /**
-     * @var ExpressionInterface
+     * @var QueryFragmentInterface
      */
     private $value;
 
     /**
-     * @param string              $operator
-     * @param ExpressionInterface $value
+     * @param string                 $operator
+     * @param QueryFragmentInterface $value
      */
-    public function __construct($operator, ExpressionInterface $value)
+    public function __construct($operator, QueryFragmentInterface $value)
     {
         $this->operator = $operator;
         $this->value = $value;

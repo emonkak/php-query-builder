@@ -2,7 +2,9 @@
 
 namespace Emonkak\QueryBuilder\Expression;
 
-class BetweenOperator implements ExpressionInterface
+use Emonkak\QueryBuilder\QueryFragmentInterface;
+
+class BetweenOperator implements QueryFragmentInterface
 {
     use ExpressionHelpers;
 
@@ -12,27 +14,27 @@ class BetweenOperator implements ExpressionInterface
     private $operator;
 
     /**
-     * @var ExpressionInterface
+     * @var QueryFragmentInterface
      */
     private $lhs;
 
     /**
-     * @var ExpressionInterface
+     * @var QueryFragmentInterface
      */
     private $min;
 
     /**
-     * @var ExpressionInterface
+     * @var QueryFragmentInterface
      */
     private $max;
 
     /**
-     * @param string              $operator
-     * @param ExpressionInterface $lhs
-     * @param ExpressionInterface $min
-     * @param ExpressionInterface $max
+     * @param string                 $operator
+     * @param QueryFragmentInterface $lhs
+     * @param QueryFragmentInterface $min
+     * @param QueryFragmentInterface $max
      */
-    public function __construct($operator, ExpressionInterface $lhs, ExpressionInterface $min, ExpressionInterface $max)
+    public function __construct($operator, QueryFragmentInterface $lhs, QueryFragmentInterface $min, QueryFragmentInterface $max)
     {
         $this->operator = $operator;
         $this->lhs = $lhs;

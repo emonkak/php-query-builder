@@ -2,10 +2,14 @@
 
 namespace Emonkak\QueryBuilder;
 
+use Emonkak\QueryBuilder\Clause\Alias;
+use Emonkak\QueryBuilder\Clause\ConditionalJoin;
+use Emonkak\QueryBuilder\Clause\Join;
+use Emonkak\QueryBuilder\Clause\Sort;
+use Emonkak\QueryBuilder\Clause\Union;
 use Emonkak\QueryBuilder\Compiler\DefaultCompiler;
-use Emonkak\QueryBuilder\Expression\Alias;
 use Emonkak\QueryBuilder\Expression\ExpressionResolver;
-use Emonkak\QueryBuilder\Expression\ExpressionInterface;
+use Emonkak\QueryBuilder\QueryFragmentInterface;
 
 trait SelectQueryBuilderTrait
 {
@@ -15,37 +19,37 @@ trait SelectQueryBuilderTrait
     private $prefix = 'SELECT';
 
     /**
-     * @var ExpressionInterface[]
+     * @var QueryFragmentInterface[]
      */
     private $projections = [];
 
     /**
-     * @var ExpressionInterface[]
+     * @var QueryFragmentInterface[]
      */
     private $from = [];
 
     /**
-     * @var array[] (expr => ExpressionInterface, condition => ExpressionInterface, type => string)
+     * @var QueryFragmentInterface[]
      */
     private $join = [];
 
     /**
-     * @var ExpressionInterface
+     * @var QueryFragmentInterface
      */
     private $where = null;
 
     /**
-     * @var array[] (expr => ExpressionInterface, direction => string)
+     * @var QueryFragmentInterface[]
      */
     private $groupBy = [];
 
     /**
-     * @var ExpressionInterface
+     * @var QueryFragmentInterface
      */
     private $having = null;
 
     /**
-     * @var array[] (expr => ExpressionInterface, direction => string)
+     * @var QueryFragmentInterface[]
      */
     private $orderBy = [];
 
@@ -65,9 +69,105 @@ trait SelectQueryBuilderTrait
     private $suffix = null;
 
     /**
-     * @var array[] (query => QueryBuilderInterface, type => string)
+     * @var QueryFragmentInterface[]
      */
     private $union = [];
+
+    /**
+     * @return string
+     */
+    public function getPrefix()
+    {
+        return $this->prefix;
+    }
+
+    /**
+     * @return QueryFragmentInterface[]
+     */
+    public function getProjections()
+    {
+        return $this->projections;
+    }
+
+    /**
+     * @return QueryFragmentInterface[]
+     */
+    public function getFrom()
+    {
+        return $this->from;
+    }
+
+    /**
+     * @return QueryFragmentInterface[]
+     */
+    public function getJoin()
+    {
+        return $this->join;
+    }
+
+    /**
+     * @return QueryFragmentInterface
+     */
+    public function getWhere()
+    {
+        return $this->where;
+    }
+
+    /**
+     * @return QueryFragmentInterface[]
+     */
+    public function getGroupBy()
+    {
+        return $this->groupBy;
+    }
+
+    /**
+     * @return QueryFragmentInterface
+     */
+    public function getHaving()
+    {
+        return $this->having;
+    }
+
+    /**
+     * @return QueryFragmentInterface[]
+     */
+    public function getOrderBy()
+    {
+        return $this->orderBy;
+    }
+
+    /**
+     * @return integer
+     */
+    public function getOffset()
+    {
+        return $this->offset;
+    }
+
+    /**
+     * @return integer
+     */
+    public function getLimit()
+    {
+        return $this->limit;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSuffix()
+    {
+        return $this->suffix;
+    }
+
+    /**
+     * @return QueryFragmentInterface[]
+     */
+    public function getUnion()
+    {
+        return $this->union;
+    }
 
     /**
      * @param string $prefix
@@ -151,12 +251,14 @@ trait SelectQueryBuilderTrait
         if ($alias !== null) {
             $table = new Alias($table, $alias);
         }
+        if ($condition !== null) {
+            $condition = ExpressionResolver::resolveCreteria($condition);
+            $definition = new ConditionalJoin($table, $condition, $type);
+        } else {
+            $definition = new Join($table, $type);
+        }
         $chained = $this->chained();
-        $chained->join[] = [
-            'table' => $table,
-            'condition' => $condition !== null ? ExpressionResolver::resolveCreteria($condition) : null,
-            'type' => $type,
-        ];
+        $chained->join[] = $definition;
         return $chained;
     }
 
@@ -173,16 +275,17 @@ trait SelectQueryBuilderTrait
 
     /**
      * @param mixed  $expr
-     * @param string $direction
+     * @param string $ordering
      * @return self
      */
-    public function groupBy($expr, $direction = null)
+    public function groupBy($expr, $ordering = null)
     {
+        $expr = ExpressionResolver::resolveCreteria($expr);
+        if ($ordering !== null) {
+            $expr = new Sort($expr, $ordering);
+        }
         $chained = $this->chained();
-        $chained->groupBy[] = [
-            'expr' => ExpressionResolver::resolveCreteria($expr),
-            'direction' => $direction,
-        ];
+        $chained->groupBy[] = $expr;
         return $chained;
     }
 
@@ -214,16 +317,17 @@ trait SelectQueryBuilderTrait
 
     /**
      * @param mixed  $expr
-     * @param stirng $direction
+     * @param stirng $ordering
      * @return self
      */
-    public function orderBy($expr, $direction = null)
+    public function orderBy($expr, $ordering = null)
     {
+        $expr = ExpressionResolver::resolveCreteria($expr);
+        if ($ordering !== null) {
+            $expr = new Sort($expr, $ordering);
+        }
         $chained = $this->chained();
-        $chained->orderBy[] = [
-            'expr' => ExpressionResolver::resolveCreteria($expr),
-            'direction' => $direction,
-        ];
+        $chained->orderBy[] = $expr;
         return $chained;
     }
 
@@ -276,10 +380,7 @@ trait SelectQueryBuilderTrait
     public function union(QueryBuilderInterface $query, $type = 'UNION')
     {
         $chained = $this->chained();
-        $chained->union[] = [
-            'query' => $query,
-            'type' => $type,
-        ];
+        $chained->union[] = new Union($query, $type);
         return $chained;
     }
 
@@ -324,9 +425,5 @@ trait SelectQueryBuilderTrait
     /**
      * @return self
      */
-    protected function chained()
-    {
-        $chained = clone $this;
-        return $chained;
-    }
+    abstract protected function chained();
 }
