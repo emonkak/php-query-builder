@@ -30,7 +30,7 @@ class DefaultCompiler implements CompilerInterface
     /**
      * {@inheritDoc}
      */
-    public function compileSelect($prefix, array $projections, array $from = null, array $join, ExpressionInterface $where = null, array $groupBy, ExpressionInterface $having = null, array $orderBy, $limit, $offset, $suffix)
+    public function compileSelect($prefix, array $projections, array $from = null, array $join, ExpressionInterface $where = null, array $groupBy, ExpressionInterface $having = null, array $orderBy, $limit, $offset, $suffix, array $union)
     {
         $binds = [];
         $sql = $prefix
@@ -44,6 +44,16 @@ class DefaultCompiler implements CompilerInterface
              . $this->compileLimit($limit, $binds)
              . $this->compileOffset($offset, $binds)
              . ($suffix !== null ? ' ' . $suffix : '');
+
+        if (!empty($union)) {
+            $sql = '(' . $sql . ')';
+        }
+
+        foreach ($union as $definition) {
+            list ($unionSql, $unionBinds) = $definition['query']->build();
+            $sql .= ' ' . $definition['type'] . ' (' . $unionSql . ')';
+            $binds = array_merge($binds, $unionBinds);
+        }
 
         return [$sql, $binds];
     }
