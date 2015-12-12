@@ -4,9 +4,12 @@ namespace Emonkak\QueryBuilder\Expression;
 
 use Emonkak\QueryBuilder\QueryFragmentInterface;
 
+/**
+ * @internal
+ */
 class Str implements QueryFragmentInterface
 {
-    use ExpressionHelpers;
+    use ExpressionHelper;
 
     /**
      * @var string

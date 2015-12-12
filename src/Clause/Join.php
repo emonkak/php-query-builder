@@ -4,6 +4,9 @@ namespace Emonkak\QueryBuilder\Clause;
 
 use Emonkak\QueryBuilder\QueryFragmentInterface;
 
+/**
+ * @internal
+ */
 class Join implements QueryFragmentInterface
 {
     /**

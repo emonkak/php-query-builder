@@ -1,12 +1,18 @@
 <?php
 
-namespace Emonkak\QueryBuilder\Expression;
+namespace Emonkak\QueryBuilder;
 
-use Emonkak\QueryBuilder\QueryBuilderInterface;
-use Emonkak\QueryBuilder\QueryFragmentInterface;
-use Emonkak\QueryBuilder\SelectQueryBuilder;
+use Emonkak\QueryBuilder\Expression\BetweenOperator;
+use Emonkak\QueryBuilder\Expression\NullValue;
+use Emonkak\QueryBuilder\Expression\Operator;
+use Emonkak\QueryBuilder\Expression\PrefixOperator;
+use Emonkak\QueryBuilder\Expression\Raw;
+use Emonkak\QueryBuilder\Expression\Str;
+use Emonkak\QueryBuilder\Expression\SubQuery;
+use Emonkak\QueryBuilder\Expression\Value;
+use Emonkak\QueryBuilder\Expression\Values;
 
-class ExpressionResolver
+class Creteria
 {
     /**
      * @codeCoverageIgnore
@@ -16,10 +22,31 @@ class ExpressionResolver
     }
 
     /**
+     * @param mixed $creteria
+     * @return QueryFragmentInterface
+     */
+    public static function of($creteria)
+    {
+        if (is_array($creteria)) {
+            switch (count($creteria)) {
+            case 1:
+                return self::ofSingle($creteria[0]);
+            case 2:
+                return self::ofDouble($creteria[0], $creteria[1]);
+            case 3:
+                return self::ofTriple($creteria[0], $creteria[1], $creteria[2]);
+            default:
+                throw new \InvalidArgumentException('The number of arguments is incorrect');
+            }
+        }
+        return self::ofSingle($creteria);
+    }
+
+    /**
      * @param mixed $value
      * @return QueryFragmentInterface
      */
-    public static function resolveAsValue($value)
+    public static function ofValue($value)
     {
         if ($value === null) {
             return new NullValue();
@@ -37,8 +64,8 @@ class ExpressionResolver
             return $value;
         }
         if ($value instanceof \Closure) {
-            return self::resolveAsValue($value(function() {
-                return self::resolveCreteria(func_get_args());
+            return self::ofValue($value(function() {
+                return self::of(func_get_args());
             }));
         }
         $type = gettype($value);
@@ -49,50 +76,29 @@ class ExpressionResolver
      * @param mixed $value
      * @return QueryFragmentInterface
      */
-    public static function resolveAsString($value)
+    public static function ofString($value)
     {
         if (is_string($value)) {
-            return new Str($value, []);
+            return new Str($value);
         }
-        return self::resolveAsValue($value);
+        return self::ofValue($value);
     }
 
     /**
-     * @param mixed $creteria
+     * @param mixed $first
      * @return QueryFragmentInterface
      */
-    public static function resolveCreteria($creteria)
+    private static function ofSingle($first)
     {
-        if (is_array($creteria)) {
-            switch (count($creteria)) {
-            case 1:
-                return self::resolveSingleCreteria($creteria[0]);
-            case 2:
-                return self::resolveDoubleCreteria($creteria[0], $creteria[1]);
-            case 3:
-                return self::resolveTripleCreteria($creteria[0], $creteria[1], $creteria[2]);
-            default:
-                throw new \InvalidArgumentException('The number of arguments is incorrect');
-            }
-        }
-        return self::resolveSingleCreteria($creteria);
+        return self::ofString($first);
     }
 
     /**
-     * @param $first mixed
+     * @param string $first
+     * @param mixed  $second
      * @return QueryFragmentInterface
      */
-    private static function resolveSingleCreteria($first)
-    {
-        return self::resolveAsString($first);
-    }
-
-    /**
-     * @param $first  string
-     * @param $second mixed
-     * @return QueryFragmentInterface
-     */
-    private static function resolveDoubleCreteria($first, $second)
+    private static function ofDouble($first, $second)
     {
         switch ($first) {
         case 'ALL';
@@ -103,25 +109,25 @@ class ExpressionResolver
         case 'NOT SOME';
         case 'EXISTS';
         case 'NOT EXISTS';
-            return new PrefixOperator($first, self::resolveAsValue($second));
+            return new PrefixOperator($first, self::ofValue($second));
         }
 
         if (is_array($second)) {
             return new Raw($first, $second);
         } else {
-            $lhs = self::resolveAsString($first);
-            $rhs = self::resolveAsValue($second);
+            $lhs = self::ofString($first);
+            $rhs = self::ofValue($second);
             return new Operator('=', $lhs, $rhs);
         }
     }
 
     /**
-     * @param $first  string
-     * @param $second string
-     * @param $third  mixed
+     * @param string $first
+     * @param string $second
+     * @param mixed  $third
      * @return QueryFragmentInterface
      */
-    private static function resolveTripleCreteria($first, $second, $third)
+    private static function ofTriple($first, $second, $third)
     {
         switch ($second) {
         case '=':
@@ -142,14 +148,14 @@ class ExpressionResolver
         case 'NOT REGEXP':
         case 'IS':
         case 'IS NOT':
-            $lhs = self::resolveAsString($first);
-            $rhs = self::resolveAsValue($third);
+            $lhs = self::ofString($first);
+            $rhs = self::ofValue($third);
             return new Operator($second, $lhs, $rhs);
         case 'BETWEEN':
         case 'NOT BETWEEN':
-            $lhs = self::resolveAsString($first);
-            $min = self::resolveAsValue($third[0]);
-            $max = self::resolveAsValue($third[1]);
+            $lhs = self::ofString($first);
+            $min = self::ofValue($third[0]);
+            $max = self::ofValue($third[1]);
             return new BetweenOperator($second, $lhs, $min, $max);
         }
         throw new \InvalidArgumentException("Invalid operator, got '$second'.");

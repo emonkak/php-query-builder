@@ -9,7 +9,7 @@ interface CompilerInterface
 {
     /**
      * @param string                   $prefix
-     * @param QueryFragmentInterface[] $projections
+     * @param QueryFragmentInterface[] $select
      * @param QueryFragmentInterface[] $from
      * @param QueryFragmentInterface[] $join
      * @param QueryFragmentInterface   $where
@@ -21,5 +21,5 @@ interface CompilerInterface
      * @param QueryBuilderInterface[]  $union
      * @return array (sql: string, binds: mixed[])
      */
-    public function compileSelect($prefix, array $projections, array $from = null, array $join, QueryFragmentInterface $where = null, array $groupBy, QueryFragmentInterface $having = null, array $orderBy, $limit, $offset, $suffix, array $union);
+    public function compileSelect($prefix, array $select, array $from = null, array $join, QueryFragmentInterface $where = null, array $groupBy, QueryFragmentInterface $having = null, array $orderBy, $limit, $offset, $suffix, array $union);
 }

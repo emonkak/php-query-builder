@@ -5,9 +5,12 @@ namespace Emonkak\QueryBuilder\Expression;
 use Emonkak\QueryBuilder\QueryBuilderInterface;
 use Emonkak\QueryBuilder\ToStringable;
 
+/**
+ * @internal
+ */
 class SubQuery implements QueryBuilderInterface
 {
-    use ExpressionHelpers;
+    use ExpressionHelper;
     use ToStringable;
 
     /**

@@ -30,11 +30,11 @@ class DefaultCompiler implements CompilerInterface
     /**
      * {@inheritDoc}
      */
-    public function compileSelect($prefix, array $projections, array $from = null, array $join, QueryFragmentInterface $where = null, array $groupBy, QueryFragmentInterface $having = null, array $orderBy, $limit, $offset, $suffix, array $union)
+    public function compileSelect($prefix, array $select, array $from = null, array $join, QueryFragmentInterface $where = null, array $groupBy, QueryFragmentInterface $having = null, array $orderBy, $limit, $offset, $suffix, array $union)
     {
         $binds = [];
         $sql = $prefix
-             . $this->compileProjections($projections, $binds)
+             . $this->compileProjections($select, $binds)
              . $this->compileFrom($from, $binds)
              . $this->compileJoin($join, $binds)
              . $this->compileWhere($where, $binds)
@@ -59,21 +59,21 @@ class DefaultCompiler implements CompilerInterface
     }
 
     /**
-     * @param QueryFragmentInterface[] $projections
+     * @param QueryFragmentInterface[] $select
      * @param mixed[]                  &$binds
      * @return string
      */
-    protected function compileProjections(array $projections, array &$binds)
+    protected function compileProjections(array $select, array &$binds)
     {
-        if (empty($projections)) {
+        if (empty($select)) {
             return ' *';
         }
 
         $sqls = [];
-        foreach ($projections as $projection) {
-            list ($projectionSql, $projectionBinds) = $projection->build();
-            $sqls[] = $projectionSql;
-            $binds = array_merge($binds, $projectionBinds);
+        foreach ($select as $definition) {
+            list ($selectSql, $selectBinds) = $definition->build();
+            $sqls[] = $selectSql;
+            $binds = array_merge($binds, $selectBinds);
         }
 
         return ' ' . implode(', ', $sqls);

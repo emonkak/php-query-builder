@@ -2,86 +2,91 @@
 
 namespace Emonkak\QueryBuilder\Expression;
 
-trait ExpressionHelpers
+use Emonkak\QueryBuilder\Creteria;
+
+/**
+ * @internal
+ */
+trait ExpressionHelper
 {
     public function eq($rhs)
     {
-        return new Operator('=', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('=', $this, Creteria::ofValue($rhs));
     }
 
     public function notEq($rhs)
     {
-        return new Operator('<>', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('<>', $this, Creteria::ofValue($rhs));
     }
 
     public function lt($rhs)
     {
-        return new Operator('<', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('<', $this, Creteria::ofValue($rhs));
     }
 
     public function ltEq($rhs)
     {
-        return new Operator('<=', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('<=', $this, Creteria::ofValue($rhs));
     }
 
     public function gt($rhs)
     {
-        return new Operator('>', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('>', $this, Creteria::ofValue($rhs));
     }
 
     public function gtEq($rhs)
     {
-        return new Operator('>=', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('>=', $this, Creteria::ofValue($rhs));
     }
 
     public function in($rhs)
     {
-        return new Operator('IN', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('IN', $this, Creteria::ofValue($rhs));
     }
 
     public function notIn($rhs)
     {
-        return new Operator('NOT IN', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('NOT IN', $this, Creteria::ofValue($rhs));
     }
 
     public function between($min, $max)
     {
-        return new BetweenOperator('BETWEEN', $this, ExpressionResolver::resolveAsValue($min), ExpressionResolver::resolveAsValue($max));
+        return new BetweenOperator('BETWEEN', $this, Creteria::ofValue($min), Creteria::ofValue($max));
     }
 
     public function notBetween($rhs)
     {
-        return new BetweenOperator('NOT BETWEEN', $this, ExpressionResolver::resolveAsValue($min), ExpressionResolver::resolveAsValue($max));
+        return new BetweenOperator('NOT BETWEEN', $this, Creteria::ofValue($min), Creteria::ofValue($max));
     }
 
     public function _and($rhs)
     {
-        return new Operator('AND', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('AND', $this, Creteria::ofValue($rhs));
     }
 
     public function _or($rhs)
     {
-        return new Operator('OR', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('OR', $this, Creteria::ofValue($rhs));
     }
 
     public function like($rhs)
     {
-        return new Operator('LIKE', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('LIKE', $this, Creteria::ofValue($rhs));
     }
 
     public function notLike($rhs)
     {
-        return new Operator('NOT LIKE', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('NOT LIKE', $this, Creteria::ofValue($rhs));
     }
 
     public function regexp($rhs)
     {
-        return new Operator('REGEXP', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('REGEXP', $this, Creteria::ofValue($rhs));
     }
 
     public function notRegexp($rhs)
     {
-        return new Operator('NOT REGEXP', $this, ExpressionResolver::resolveAsValue($rhs));
+        return new Operator('NOT REGEXP', $this, Creteria::ofValue($rhs));
     }
 
     public function not()
@@ -137,5 +142,10 @@ trait ExpressionHelpers
     public function isNotNull()
     {
         return new PostfixOperator('IS NOT NULL', $this);
+    }
+
+    public function apply($func)
+    {
+        return new Func($func, $this);
     }
 }

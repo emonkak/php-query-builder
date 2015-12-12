@@ -5,6 +5,9 @@ namespace Emonkak\QueryBuilder\Clause;
 use Emonkak\QueryBuilder\QueryBuilderInterface;
 use Emonkak\QueryBuilder\QueryFragmentInterface;
 
+/**
+ * @internal
+ */
 class Union implements QueryFragmentInterface
 {
     /**

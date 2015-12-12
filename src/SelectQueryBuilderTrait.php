@@ -8,7 +8,6 @@ use Emonkak\QueryBuilder\Clause\Join;
 use Emonkak\QueryBuilder\Clause\Sort;
 use Emonkak\QueryBuilder\Clause\Union;
 use Emonkak\QueryBuilder\Compiler\DefaultCompiler;
-use Emonkak\QueryBuilder\Expression\ExpressionResolver;
 use Emonkak\QueryBuilder\QueryFragmentInterface;
 
 trait SelectQueryBuilderTrait
@@ -21,7 +20,7 @@ trait SelectQueryBuilderTrait
     /**
      * @var QueryFragmentInterface[]
      */
-    private $projections = [];
+    private $select = [];
 
     /**
      * @var QueryFragmentInterface[]
@@ -84,9 +83,9 @@ trait SelectQueryBuilderTrait
     /**
      * @return QueryFragmentInterface[]
      */
-    public function getProjections()
+    public function getSelect()
     {
-        return $this->projections;
+        return $this->select;
     }
 
     /**
@@ -170,6 +169,94 @@ trait SelectQueryBuilderTrait
     }
 
     /**
+     * @param QueryFragmentInterface[] $select
+     * @return self
+     */
+    public function withSelect(array $select)
+    {
+        $chained = $this->chained();
+        $chained->select = $select;
+        return $chained;
+    }
+
+    /**
+     * @param QueryFragmentInterface[] $from
+     * @return self
+     */
+    public function withFrom(array $from)
+    {
+        $chained = $this->chained();
+        $chained->from = $from;
+        return $chained;
+    }
+
+    /**
+     * @param QueryFragmentInterface[] $join
+     * @return self
+     */
+    public function withJoin(array $join)
+    {
+        $chained = $this->chained();
+        $chained->join = $join;
+        return $chained;
+    }
+
+    /**
+     * @param QueryFragmentInterface $where
+     * @return self
+     */
+    public function withWhere(QueryFragmentInterface $where = null)
+    {
+        $chained = $this->chained();
+        $chained->where = $where;
+        return $chained;
+    }
+
+    /**
+     * @param QueryFragmentInterface[] $groupBy
+     * @return self
+     */
+    public function withGroupBy(array $groupBy)
+    {
+        $chained = $this->chained();
+        $chained->groupBy = $groupBy;
+        return $chained;
+    }
+
+    /**
+     * @param QueryFragmentInterface $having
+     * @return self
+     */
+    public function withHaving(QueryFragmentInterface $having = null)
+    {
+        $chained = $this->chained();
+        $chained->having = $having;
+        return $chained;
+    }
+
+    /**
+     * @param QueryFragmentInterface[] $orderBy
+     * @return self
+     */
+    public function withOrderBy(array $orderBy)
+    {
+        $chained = $this->chained();
+        $chained->orderBy = $orderBy;
+        return $chained;
+    }
+
+    /**
+     * @param QueryFragmentInterface[] $union
+     * @return self
+     */
+    public function withUnion(array $union)
+    {
+        $chained = $this->chained();
+        $chained->union = $union;
+        return $chained;
+    }
+
+    /**
      * @param string $prefix
      * @return self
      */
@@ -187,13 +274,13 @@ trait SelectQueryBuilderTrait
      */
     public function select($expr, $alias = null)
     {
-        $expr = ExpressionResolver::resolveCreteria($expr);
+        $expr = Creteria::of($expr);
         if ($alias !== null) {
             $expr = new Alias($expr, $alias);
         }
-        $chained = $this->chained();
-        $chained->projections[] = $expr;
-        return $chained;
+        $select = $this->select;
+        $select[] = $expr;
+        return $this->withSelect($select);
     }
 
     /**
@@ -203,13 +290,13 @@ trait SelectQueryBuilderTrait
      */
     public function from($expr, $alias = null)
     {
-        $expr = ExpressionResolver::resolveCreteria($expr);
+        $expr = Creteria::of($expr);
         if ($alias !== null) {
             $expr = new Alias($expr, $alias);
         }
-        $chained = $this->chained();
-        $chained->from[] = $expr;
-        return $chained;
+        $from = $this->from;
+        $from[] = $expr;
+        return $this->withFrom($from);
     }
 
     /**
@@ -219,10 +306,9 @@ trait SelectQueryBuilderTrait
     public function where()
     {
         $args = func_get_args();
-        $expr = ExpressionResolver::resolveCreteria($args);
-        $chained = $this->chained();
-        $chained->where = $chained->where ? $chained->where->_and($expr) : $expr;
-        return $chained;
+        $expr = Creteria::of($args);
+        $where = $this->where ? $this->where->_and($expr) : $expr;
+        return $this->withWhere($where);
     }
 
     /**
@@ -232,10 +318,9 @@ trait SelectQueryBuilderTrait
     public function orWhere()
     {
         $args = func_get_args();
-        $expr = ExpressionResolver::resolveCreteria($args);
-        $chained = $this->chained();
-        $chained->where = $chained->where ? $chained->where->_or($expr) : $expr;
-        return $chained;
+        $expr = Creteria::of($args);
+        $where = $this->where ? $this->where->_and($expr) : $expr;
+        return $this->withWhere($where);
     }
 
     /**
@@ -247,19 +332,18 @@ trait SelectQueryBuilderTrait
      */
     public function join($table, $condition = null, $alias = null, $type = 'JOIN')
     {
-        $table = ExpressionResolver::resolveCreteria($table);
+        $table = Creteria::of($table);
         if ($alias !== null) {
             $table = new Alias($table, $alias);
         }
+        $join = $this->join;
         if ($condition !== null) {
-            $condition = ExpressionResolver::resolveCreteria($condition);
-            $definition = new ConditionalJoin($table, $condition, $type);
+            $condition = Creteria::of($condition);
+            $join[] = new ConditionalJoin($table, $condition, $type);
         } else {
-            $definition = new Join($table, $type);
+            $join[] = new Join($table, $type);
         }
-        $chained = $this->chained();
-        $chained->join[] = $definition;
-        return $chained;
+        return $this->withJoin($join);
     }
 
     /**
@@ -280,13 +364,13 @@ trait SelectQueryBuilderTrait
      */
     public function groupBy($expr, $ordering = null)
     {
-        $expr = ExpressionResolver::resolveCreteria($expr);
+        $expr = Creteria::of($expr);
         if ($ordering !== null) {
             $expr = new Sort($expr, $ordering);
         }
-        $chained = $this->chained();
-        $chained->groupBy[] = $expr;
-        return $chained;
+        $groupBy = $this->groupBy;
+        $groupBy[] = $expr;
+        return $this->withGroupBy($groupBy);
     }
 
     /**
@@ -296,10 +380,9 @@ trait SelectQueryBuilderTrait
     public function having()
     {
         $args = func_get_args();
-        $expr = ExpressionResolver::resolveCreteria($args);
-        $chained = $this->chained();
-        $chained->having = $chained->having ? $chained->having->_and($expr) : $expr;
-        return $chained;
+        $expr = Creteria::of($args);
+        $having = $this->having ? $this->having->_and($expr) : $expr;
+        return $this->withHaving($having);
     }
 
     /**
@@ -309,10 +392,9 @@ trait SelectQueryBuilderTrait
     public function orHaving()
     {
         $args = func_get_args();
-        $expr = ExpressionResolver::resolveCreteria($args);
-        $chained = $this->chained();
-        $chained->having = $chained->having ? $chained->having->_or($expr) : $expr;
-        return $chained;
+        $expr = Creteria::of($args);
+        $having = $this->having ? $this->having->_or($expr) : $expr;
+        return $this->withHaving($having);
     }
 
     /**
@@ -322,13 +404,13 @@ trait SelectQueryBuilderTrait
      */
     public function orderBy($expr, $ordering = null)
     {
-        $expr = ExpressionResolver::resolveCreteria($expr);
+        $expr = Creteria::of($expr);
         if ($ordering !== null) {
             $expr = new Sort($expr, $ordering);
         }
-        $chained = $this->chained();
-        $chained->orderBy[] = $expr;
-        return $chained;
+        $orderBy = $this->orderBy;
+        $orderBy[] = $expr;
+        return $this->withOrderBy($orderBy);
     }
 
     /**
@@ -379,9 +461,9 @@ trait SelectQueryBuilderTrait
      */
     public function union(QueryBuilderInterface $query, $type = 'UNION')
     {
-        $chained = $this->chained();
-        $chained->union[] = new Union($query, $type);
-        return $chained;
+        $union = $this->union;
+        $union[] = new Union($query, $type);
+        return $this->withUnion($union);
     }
 
     /**
@@ -394,13 +476,13 @@ trait SelectQueryBuilderTrait
     }
 
     /**
-     * {@inheritDoc}
+     * @return array (string, mixed[])
      */
     public function build()
     {
         return $this->getCompiler()->compileSelect(
             $this->prefix,
-            $this->projections,
+            $this->select,
             $this->from,
             $this->join,
             $this->where,
