@@ -319,7 +319,7 @@ trait SelectQueryBuilderTrait
     {
         $args = func_get_args();
         $expr = Creteria::of($args);
-        $where = $this->where ? $this->where->_and($expr) : $expr;
+        $where = $this->where ? $this->where->_or($expr) : $expr;
         return $this->withWhere($where);
     }
 
