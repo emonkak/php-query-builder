@@ -22,24 +22,25 @@ class Creteria
     }
 
     /**
-     * @param mixed $creteria
+     * @param mixed ...$args
      * @return QueryFragmentInterface
      */
     public static function of($creteria)
     {
-        if (is_array($creteria)) {
-            switch (count($creteria)) {
-            case 1:
-                return self::ofSingle($creteria[0]);
-            case 2:
-                return self::ofDouble($creteria[0], $creteria[1]);
-            case 3:
-                return self::ofTriple($creteria[0], $creteria[1], $creteria[2]);
-            default:
-                throw new \InvalidArgumentException('The number of arguments is incorrect');
-            }
+        if (!is_array($creteria)) {
+            $creteria = func_get_args();
         }
-        return self::ofSingle($creteria);
+
+        switch (count($creteria)) {
+        case 1:
+            return self::ofSingle($creteria[0]);
+        case 2:
+            return self::ofDouble($creteria[0], $creteria[1]);
+        case 3:
+            return self::ofTriple($creteria[0], $creteria[1], $creteria[2]);
+        }
+
+        throw new \InvalidArgumentException('The number of arguments is incorrect');
     }
 
     /**
@@ -73,24 +74,15 @@ class Creteria
     }
 
     /**
-     * @param mixed $value
-     * @return QueryFragmentInterface
-     */
-    public static function ofString($value)
-    {
-        if (is_string($value)) {
-            return new Str($value);
-        }
-        return self::ofValue($value);
-    }
-
-    /**
      * @param mixed $first
      * @return QueryFragmentInterface
      */
     private static function ofSingle($first)
     {
-        return self::ofString($first);
+        if (is_string($first)) {
+            return new Str($first);
+        }
+        return self::ofValue($first);
     }
 
     /**
@@ -115,7 +107,7 @@ class Creteria
         if (is_array($second)) {
             return new Raw($first, $second);
         } else {
-            $lhs = self::ofString($first);
+            $lhs = self::ofSingle($first);
             $rhs = self::ofValue($second);
             return new Operator('=', $lhs, $rhs);
         }
@@ -148,12 +140,12 @@ class Creteria
         case 'NOT REGEXP':
         case 'IS':
         case 'IS NOT':
-            $lhs = self::ofString($first);
+            $lhs = self::ofSingle($first);
             $rhs = self::ofValue($third);
             return new Operator($second, $lhs, $rhs);
         case 'BETWEEN':
         case 'NOT BETWEEN':
-            $lhs = self::ofString($first);
+            $lhs = self::ofSingle($first);
             $min = self::ofValue($third[0]);
             $max = self::ofValue($third[1]);
             return new BetweenOperator($second, $lhs, $min, $max);
