@@ -3,15 +3,14 @@
 namespace Emonkak\QueryBuilder\Expression;
 
 use Emonkak\QueryBuilder\QueryBuilderInterface;
-use Emonkak\QueryBuilder\ToStringable;
+use Emonkak\QueryBuilder\QueryFragmentInterface;
 
 /**
  * @internal
  */
-class SubQuery implements QueryBuilderInterface
+class SubQuery implements QueryFragmentInterface
 {
     use ExpressionHelper;
-    use ToStringable;
 
     /**
      * @var QueryBuilderInterface
