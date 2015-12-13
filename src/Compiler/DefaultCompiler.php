@@ -34,26 +34,22 @@ class DefaultCompiler implements CompilerInterface
     {
         $binds = [];
         $sql = $prefix
-             . $this->compileProjections($select, $binds)
-             . $this->compileFrom($from, $binds)
-             . $this->compileJoin($join, $binds)
-             . $this->compileWhere($where, $binds)
-             . $this->compileGroupBy($groupBy, $binds)
-             . $this->compileHaving($having, $binds)
-             . $this->compileOrderBy($orderBy, $binds)
-             . $this->compileLimit($limit, $binds)
-             . $this->compileOffset($offset, $binds)
+             . $this->processProjections($select, $binds)
+             . $this->processFrom($from, $binds)
+             . $this->processJoin($join, $binds)
+             . $this->processWhere($where, $binds)
+             . $this->processGroupBy($groupBy, $binds)
+             . $this->processHaving($having, $binds)
+             . $this->processOrderBy($orderBy, $binds)
+             . $this->processLimit($limit, $binds)
+             . $this->processOffset($offset, $binds)
              . ($suffix !== null ? ' ' . $suffix : '');
 
         if (!empty($union)) {
             $sql = '(' . $sql . ')';
         }
 
-        foreach ($union as $definition) {
-            list ($unionSql, $unionBinds) = $definition->build();
-            $sql .= ' ' . $unionSql;
-            $binds = array_merge($binds, $unionBinds);
-        }
+        $sql .= $this->processUnion($union, $binds);
 
         return [$sql, $binds];
     }
@@ -63,7 +59,7 @@ class DefaultCompiler implements CompilerInterface
      * @param mixed[]                  &$binds
      * @return string
      */
-    protected function compileProjections(array $select, array &$binds)
+    protected function processProjections(array $select, array &$binds)
     {
         if (empty($select)) {
             return ' *';
@@ -84,7 +80,7 @@ class DefaultCompiler implements CompilerInterface
      * @param mixed[]                  &$binds
      * @return string
      */
-    protected function compileFrom(array $from, array &$binds)
+    protected function processFrom(array $from, array &$binds)
     {
         if (empty($from)) {
             return '';
@@ -105,7 +101,7 @@ class DefaultCompiler implements CompilerInterface
      * @param mixed[] &$binds
      * @return string
      */
-    protected function compileJoin(array $join, array &$binds)
+    protected function processJoin(array $join, array &$binds)
     {
         if (empty($join)) {
             return '';
@@ -126,7 +122,7 @@ class DefaultCompiler implements CompilerInterface
      * @param mixed[]                &$binds
      * @return string
      */
-    protected function compileWhere(QueryFragmentInterface $where = null, array &$binds)
+    protected function processWhere(QueryFragmentInterface $where = null, array &$binds)
     {
         if (!isset($where)) {
             return '';
@@ -143,7 +139,7 @@ class DefaultCompiler implements CompilerInterface
      * @param mixed[] &$binds
      * @return string
      */
-    protected function compileGroupBy(array $groupBy, array &$binds)
+    protected function processGroupBy(array $groupBy, array &$binds)
     {
         if (empty($groupBy)) {
             return '';
@@ -164,7 +160,7 @@ class DefaultCompiler implements CompilerInterface
      * @param mixed[]                &$binds
      * @return string
      */
-    protected function compileHaving(QueryFragmentInterface $having = null, array &$binds)
+    protected function processHaving(QueryFragmentInterface $having = null, array &$binds)
     {
         if (!isset($having)) {
             return '';
@@ -181,7 +177,7 @@ class DefaultCompiler implements CompilerInterface
      * @param mixed[] &$binds
      * @return string
      */
-    protected function compileOrderBy(array $orderBy, array &$binds)
+    protected function processOrderBy(array $orderBy, array &$binds)
     {
         if (empty($orderBy)) {
             return '';
@@ -202,7 +198,7 @@ class DefaultCompiler implements CompilerInterface
      * @param mixed[] &$binds
      * @return string
      */
-    protected function compileLimit($limit, array &$binds)
+    protected function processLimit($limit, array &$binds)
     {
         if ($limit === null) {
             return '';
@@ -217,7 +213,7 @@ class DefaultCompiler implements CompilerInterface
      * @param mixed[] &$binds
      * @return string
      */
-    protected function compileOffset($offset, array &$binds)
+    protected function processOffset($offset, array &$binds)
     {
         if ($offset === null) {
             return '';
@@ -225,5 +221,26 @@ class DefaultCompiler implements CompilerInterface
 
         $binds[] = $offset;
         return ' OFFSET ?';
+    }
+
+    /**
+     * @param array   $union
+     * @param mixed[] &$binds
+     * @return string
+     */
+    protected function processUnion(array $union, array &$binds)
+    {
+        if (empty($union)) {
+            return '';
+        }
+
+        $sqls = [];
+        foreach ($union as $definition) {
+            list ($unionSql, $unionBinds) = $definition->build();
+            $sqls[] = $unionSql;
+            $binds = array_merge($binds, $unionBinds);
+        }
+
+        return ' ' . implode(' ', $sqls);
     }
 }
