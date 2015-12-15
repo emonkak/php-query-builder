@@ -2,6 +2,7 @@
 
 namespace Emonkak\QueryBuilder\Tests;
 
+use Emonkak\QueryBuilder\Creteria;
 use Emonkak\QueryBuilder\SelectQueryBuilder;
 
 class SelectQueryBuilderTest extends \PHPUnit_Framework_TestCase
@@ -112,12 +113,14 @@ class SelectQueryBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('SELECT * FROM t1 JOIN (SELECT * FROM t2) AS t2 ON t1.id = t2.id', $sql);
         $this->assertSame([], $binds);
 
+
         list ($sql, $binds) = (new SelectQueryBuilder())
             ->from('t1')
-            ->join('t2', function($c) {
-                return $c('t1.id')->eq($c('t2.id'))
-                    ->_and($c('t2.name', 'IN', ['Yui Ogura', 'Kaori Ishihara']));
-            })
+            ->join(
+                't2',
+                Creteria::of('t1.id')->eq(Creteria::of('t2.id'))
+                    ->_and(Creteria::of('t2.name', 'IN', ['Yui Ogura', 'Kaori Ishihara']))
+            )
             ->build();
         $this->assertSame('SELECT * FROM t1 JOIN t2 ON ((t1.id = t2.id) AND (t2.name IN (?, ?)))', $sql);
         $this->assertSame(['Yui Ogura', 'Kaori Ishihara'], $binds);
@@ -161,10 +164,7 @@ class SelectQueryBuilderTest extends \PHPUnit_Framework_TestCase
         $q = (new SelectQueryBuilder())->select('c1')->from('t2')->where('c2', 'foo')->limit(1);
         list ($sql, $binds) = (new SelectQueryBuilder())
             ->from('t1')
-            ->where(function($c) {
-                $q = (new SelectQueryBuilder())->select('c1')->from('t2')->where('c2', 'foo')->limit(1);
-                return $c($q)->eq('bar');
-            })
+            ->where(Creteria::of($q)->eq('bar'))
             ->build();
         $this->assertSame('SELECT * FROM t1 WHERE ((SELECT c1 FROM t2 WHERE (c2 = ?) LIMIT ?) = ?)', $sql);
         $this->assertSame(['foo', 1, 'bar'], $binds);
@@ -211,12 +211,10 @@ class SelectQueryBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('SELECT * FROM t1 WHERE ((c1 BETWEEN ? AND ?) AND (c2 NOT BETWEEN ? AND ?))', $sql);
         $this->assertSame([1, 10, 2, 20], $binds);
 
+        $q = (new SelectQueryBuilder())->select('c1')->from('t2')->where('c2', 'foo');
         list ($sql, $binds) = (new SelectQueryBuilder())
             ->from('t1')
-            ->where(function($c) {
-                $q = (new SelectQueryBuilder())->select('c1')->from('t2')->where('c2', 'foo');
-                return $c($q)->between(1, 10);
-            })
+            ->where(Creteria::of($q)->between(1, 10))
             ->build();
         $this->assertSame('SELECT * FROM t1 WHERE ((SELECT c1 FROM t2 WHERE (c2 = ?)) BETWEEN ? AND ?)', $sql);
         $this->assertSame(['foo', 1, 10], $binds);
@@ -240,12 +238,10 @@ class SelectQueryBuilderTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('SELECT * FROM t1 WHERE (c1 IN (SELECT c1 FROM t2 WHERE (c2 = ?)))', $sql);
         $this->assertSame(['foo'], $binds);
 
+        $q = (new SelectQueryBuilder())->select('c1')->from('t2')->where('c2', 'foo')->limit(1);
         list ($sql, $binds) = (new SelectQueryBuilder())
             ->from('t1')
-            ->where(function($c) {
-                $q = (new SelectQueryBuilder())->select('c1')->from('t2')->where('c2', 'foo')->limit(1);
-                return $c($q)->in([1, 2, 3]);
-            })
+            ->where(Creteria::of($q)->in([1, 2, 3]))
             ->build();
         $this->assertSame('SELECT * FROM t1 WHERE ((SELECT c1 FROM t2 WHERE (c2 = ?) LIMIT ?) IN (?, ?, ?))', $sql);
         $this->assertSame(['foo', 1, 1, 2, 3], $binds);
@@ -282,22 +278,18 @@ class SelectQueryBuilderTest extends \PHPUnit_Framework_TestCase
 
     public function testWhereIsNull()
     {
+        $q = (new SelectQueryBuilder())->select('c1')->from('t2')->where('c2', 'foo')->limit(1);
         list ($sql, $binds) = (new SelectQueryBuilder())
             ->from('t1')
-            ->where(function($c) {
-                $q = (new SelectQueryBuilder())->select('c1')->from('t2')->where('c2', 'foo')->limit(1);
-                return $c($q)->isNull();
-            })
+            ->where(Creteria::of($q)->isNull())
             ->build();
         $this->assertSame('SELECT * FROM t1 WHERE ((SELECT c1 FROM t2 WHERE (c2 = ?) LIMIT ?) IS NULL)', $sql);
         $this->assertSame(['foo', 1], $binds);
 
+        $q = (new SelectQueryBuilder())->select('c1')->from('t2')->where('c2', 'foo')->limit(1);
         list ($sql, $binds) = (new SelectQueryBuilder())
             ->from('t1')
-            ->where(function($c) {
-                $q = (new SelectQueryBuilder())->select('c1')->from('t2')->where('c2', 'foo')->limit(1);
-                return $c($q)->isNotNull();
-            })
+            ->where(Creteria::of($q)->isNotNull())
             ->build();
         $this->assertSame('SELECT * FROM t1 WHERE ((SELECT c1 FROM t2 WHERE (c2 = ?) LIMIT ?) IS NOT NULL)', $sql);
         $this->assertSame(['foo', 1], $binds);

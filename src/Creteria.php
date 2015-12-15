@@ -64,11 +64,6 @@ class Creteria
         if ($value instanceof QueryFragmentInterface) {
             return $value;
         }
-        if ($value instanceof \Closure) {
-            return self::ofValue($value(function() {
-                return self::of(func_get_args());
-            }));
-        }
         $type = gettype($value);
         throw new \InvalidArgumentException("Invalid creteria, got '$type'.");
     }
