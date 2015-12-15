@@ -56,7 +56,7 @@ class Creteria
             return new Value($value);
         }
         if (is_array($value)) {
-            return new Values($value);
+            return new Values(array_map('self::ofValue', $value));
         }
         if ($value instanceof QueryBuilderInterface) {
             return new SubQuery($value);

@@ -12,12 +12,12 @@ class Values implements QueryFragmentInterface
     use ExpressionHelper;
 
     /**
-     * @var mixed[]
+     * @var QueryFragmentInterface[]
      */
     private $values;
 
     /**
-     * @var mixed[] $values
+     * @var QueryFragmentInterface[] $values
      */
     public function __construct(array $values)
     {
@@ -29,9 +29,15 @@ class Values implements QueryFragmentInterface
      */
     public function build()
     {
-        return [
-            '(' . implode(', ', array_fill(0, count($this->values), '?')) . ')',
-            $this->values
-        ];
+        $sqls = [];
+        $binds = [];
+
+        foreach ($this->values as $value) {
+            list ($valueSql, $valueBinds) = $value->build();
+            $sqls[] = $valueSql;
+            $binds = array_merge($binds, $valueBinds);
+        }
+
+        return ['(' . implode(', ', $sqls) . ')', $binds];
     }
 }
