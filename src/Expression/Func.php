@@ -17,18 +17,18 @@ class Func implements QueryFragmentInterface
     private $func;
 
     /**
-     * @var QueryFragmentInterface
+     * @var QueryFragmentInterface[]
      */
-    private $expr;
+    private $args;
 
     /**
-     * @param string                 $func
-     * @param QueryFragmentInterface $expr
+     * @param string                   $func
+     * @param QueryFragmentInterface[] $args
      */
-    public function __construct($func, QueryFragmentInterface $expr)
+    public function __construct($func, array $args)
     {
         $this->func = $func;
-        $this->expr = $expr;
+        $this->args = $args;
     }
 
     /**
@@ -36,7 +36,17 @@ class Func implements QueryFragmentInterface
      */
     public function build()
     {
-        list ($sql, $binds) = $this->expr->build();
-        return ["$this->func($sql)", $binds];
+        list ($funcSql, $funcBinds) = $this->func->build();
+
+        $sqls = [];
+        $binds = $funcBinds;
+
+        foreach ($this->args as $arg) {
+            list ($argSql, $argBinds) = $arg->build();
+            $sqls[] = $argSql;
+            $binds = array_merge($binds, $argBinds);
+        }
+
+        return [$funcSql . '(' . implode(', ', $sqls) . ')', $binds];
     }
 }

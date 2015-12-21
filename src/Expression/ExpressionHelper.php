@@ -144,8 +144,8 @@ trait ExpressionHelper
         return new PostfixOperator('IS NOT NULL', $this);
     }
 
-    public function apply($func)
+    public function call(array $args)
     {
-        return new Func($func, $this);
+        return new Func($this, array_map('Emonkak\QueryBuilder\Creteria::of', $args));
     }
 }
