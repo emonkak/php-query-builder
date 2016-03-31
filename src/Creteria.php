@@ -3,6 +3,7 @@
 namespace Emonkak\QueryBuilder;
 
 use Emonkak\QueryBuilder\Expression\BetweenOperator;
+use Emonkak\QueryBuilder\Expression\Func;
 use Emonkak\QueryBuilder\Expression\NullValue;
 use Emonkak\QueryBuilder\Expression\Operator;
 use Emonkak\QueryBuilder\Expression\PrefixOperator;
@@ -22,32 +23,46 @@ class Creteria
     }
 
     /**
-     * @param mixed ...$args
+     * @param mixed[] $condition
      * @return QueryFragmentInterface
      */
-    public static function of($creteria)
+    public static function condition(array $condition)
     {
-        if (!is_array($creteria)) {
-            $creteria = func_get_args();
-        }
-
-        switch (count($creteria)) {
+        switch (count($condition)) {
         case 1:
-            return self::ofSingle($creteria[0]);
+            return self::str($condition[0]);
         case 2:
-            return self::ofDouble($creteria[0], $creteria[1]);
+            return self::unaryOperator($condition[0], $condition[1]);
         case 3:
-            return self::ofTriple($creteria[0], $creteria[1], $creteria[2]);
+            return self::operator($condition[0], $condition[1], $condition[2]);
         }
-
         throw new \InvalidArgumentException('The number of arguments is incorrect');
+    }
+
+    /**
+     * @param mixed $expr
+     * @param mixed $binds
+     * @return Raw
+     */
+    public static function raw($expr, $binds)
+    {
+        return new Raw($expr, $binds);
+    }
+
+    /**
+     * @param mixed $first
+     * @return QueryFragmentInterface
+     */
+    public static function str($first)
+    {
+        return is_string($first) ? new Str($first) : self::value($first);
     }
 
     /**
      * @param mixed $value
      * @return QueryFragmentInterface
      */
-    public static function ofValue($value)
+    public static function value($value)
     {
         if ($value === null) {
             return new NullValue();
@@ -56,7 +71,7 @@ class Creteria
             return new Value($value);
         }
         if (is_array($value)) {
-            return new Values(array_map('self::ofValue', $value));
+            return new Values(array_map('self::value', $value));
         }
         if ($value instanceof QueryBuilderInterface) {
             return new SubQuery($value);
@@ -69,25 +84,23 @@ class Creteria
     }
 
     /**
-     * @param mixed $first
-     * @return QueryFragmentInterface
+     * @param string  $func
+     * @param mixed[] $args
+     * @return Func
      */
-    private static function ofSingle($first)
+    public static function call($func, array $args)
     {
-        if (is_string($first)) {
-            return new Str($first);
-        }
-        return self::ofValue($first);
+        return new Func($func, array_map('self::value', $args));
     }
 
     /**
-     * @param string $first
-     * @param mixed  $second
+     * @param string $operator
+     * @param mixed  $vlaue
      * @return QueryFragmentInterface
      */
-    private static function ofDouble($first, $second)
+    private static function unaryOperator($operator, $value)
     {
-        switch ($first) {
+        switch ($operator) {
         case 'ALL';
         case 'NOT ALL';
         case 'ANY';
@@ -96,27 +109,20 @@ class Creteria
         case 'NOT SOME';
         case 'EXISTS';
         case 'NOT EXISTS';
-            return new PrefixOperator($first, self::ofValue($second));
+            return new PrefixOperator($operator, self::value($value));
         }
-
-        if (is_array($second)) {
-            return new Raw($first, $second);
-        } else {
-            $lhs = self::ofSingle($first);
-            $rhs = self::ofValue($second);
-            return new Operator('=', $lhs, $rhs);
-        }
+        throw new \InvalidArgumentException("Invalid operator, got '$operator'.");
     }
 
     /**
-     * @param string $first
-     * @param string $second
-     * @param mixed  $third
+     * @param string $lhr
+     * @param string $operator
+     * @param mixed  $rhs
      * @return QueryFragmentInterface
      */
-    private static function ofTriple($first, $second, $third)
+    private static function operator($lhs, $operator, $rhs)
     {
-        switch ($second) {
+        switch ($operator) {
         case '=':
         case '!=':
         case '<>':
@@ -135,16 +141,16 @@ class Creteria
         case 'NOT REGEXP':
         case 'IS':
         case 'IS NOT':
-            $lhs = self::ofSingle($first);
-            $rhs = self::ofValue($third);
-            return new Operator($second, $lhs, $rhs);
+            $lhs = self::str($lhs);
+            $rhs = self::value($rhs);
+            return new Operator($operator, $lhs, $rhs);
         case 'BETWEEN':
         case 'NOT BETWEEN':
-            $lhs = self::ofSingle($first);
-            $min = self::ofValue($third[0]);
-            $max = self::ofValue($third[1]);
-            return new BetweenOperator($second, $lhs, $min, $max);
+            $lhs = self::str($lhs);
+            $min = self::value($rhs[0]);
+            $max = self::value($rhs[1]);
+            return new BetweenOperator($operator, $lhs, $min, $max);
         }
-        throw new \InvalidArgumentException("Invalid operator, got '$second'.");
+        throw new \InvalidArgumentException("Invalid operator, got '$operator'.");
     }
 }

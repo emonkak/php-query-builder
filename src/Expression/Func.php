@@ -36,10 +36,8 @@ class Func implements QueryFragmentInterface
      */
     public function build()
     {
-        list ($funcSql, $funcBinds) = $this->func->build();
-
         $sqls = [];
-        $binds = $funcBinds;
+        $binds = [];
 
         foreach ($this->args as $arg) {
             list ($argSql, $argBinds) = $arg->build();
@@ -47,6 +45,6 @@ class Func implements QueryFragmentInterface
             $binds = array_merge($binds, $argBinds);
         }
 
-        return [$funcSql . '(' . implode(', ', $sqls) . ')', $binds];
+        return [$this->func . '(' . implode(', ', $sqls) . ')', $binds];
     }
 }

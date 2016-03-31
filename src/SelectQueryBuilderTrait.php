@@ -274,7 +274,7 @@ trait SelectQueryBuilderTrait
      */
     public function select($expr, $alias = null)
     {
-        $expr = Creteria::of($expr);
+        $expr = Creteria::str($expr);
         if ($alias !== null) {
             $expr = new Alias($expr, $alias);
         }
@@ -290,7 +290,7 @@ trait SelectQueryBuilderTrait
      */
     public function from($expr, $alias = null)
     {
-        $expr = Creteria::of($expr);
+        $expr = Creteria::str($expr);
         if ($alias !== null) {
             $expr = new Alias($expr, $alias);
         }
@@ -306,7 +306,7 @@ trait SelectQueryBuilderTrait
     public function where()
     {
         $args = func_get_args();
-        $expr = Creteria::of($args);
+        $expr = Creteria::condition($args);
         $where = $this->where ? $this->where->_and($expr) : $expr;
         return $this->withWhere($where);
     }
@@ -318,7 +318,7 @@ trait SelectQueryBuilderTrait
     public function orWhere()
     {
         $args = func_get_args();
-        $expr = Creteria::of($args);
+        $expr = Creteria::condition($args);
         $where = $this->where ? $this->where->_or($expr) : $expr;
         return $this->withWhere($where);
     }
@@ -332,13 +332,13 @@ trait SelectQueryBuilderTrait
      */
     public function join($table, $condition = null, $alias = null, $type = 'JOIN')
     {
-        $table = Creteria::of($table);
+        $table = Creteria::str($table);
         if ($alias !== null) {
             $table = new Alias($table, $alias);
         }
         $join = $this->join;
         if ($condition !== null) {
-            $condition = Creteria::of($condition);
+            $condition = Creteria::str($condition);
             $join[] = new ConditionalJoin($table, $condition, $type);
         } else {
             $join[] = new Join($table, $type);
@@ -364,7 +364,7 @@ trait SelectQueryBuilderTrait
      */
     public function groupBy($expr, $ordering = null)
     {
-        $expr = Creteria::of($expr);
+        $expr = Creteria::str($expr);
         if ($ordering !== null) {
             $expr = new Sort($expr, $ordering);
         }
@@ -380,7 +380,7 @@ trait SelectQueryBuilderTrait
     public function having()
     {
         $args = func_get_args();
-        $expr = Creteria::of($args);
+        $expr = Creteria::condition($args);
         $having = $this->having ? $this->having->_and($expr) : $expr;
         return $this->withHaving($having);
     }
@@ -392,7 +392,7 @@ trait SelectQueryBuilderTrait
     public function orHaving()
     {
         $args = func_get_args();
-        $expr = Creteria::of($args);
+        $expr = Creteria::condition($args);
         $having = $this->having ? $this->having->_or($expr) : $expr;
         return $this->withHaving($having);
     }
@@ -404,7 +404,7 @@ trait SelectQueryBuilderTrait
      */
     public function orderBy($expr, $ordering = null)
     {
-        $expr = Creteria::of($expr);
+        $expr = Creteria::str($expr);
         if ($ordering !== null) {
             $expr = new Sort($expr, $ordering);
         }
